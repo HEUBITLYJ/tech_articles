@@ -22,7 +22,7 @@ https://github.com/pigirons/sgemm_hsw/blob/master/sgemm_kernel_x64_fma.S
 
 在我之前的文章里：
 
-https://github.com/pigirons/tech_articles/blob/main/%E6%B5%AE%E7%82%B9%E5%B3%B0%E5%80%BC%E9%82%A3%E4%BA%9B%E4%BA%8B%E5%84%BF.md
+[浮点峰值那些事儿](https://github.com/pigirons/tech_articles/blob/main/%E6%B5%AE%E7%82%B9%E5%B3%B0%E5%80%BC%E9%82%A3%E4%BA%9B%E4%BA%8B%E5%84%BF.md)
 
 提到过FMA的吞吐和延迟的关系。以Intel Haswell架构为例，FMA指令延迟是5个周期，每周期可以吞吐2条。这样为了掩盖所有FMA的执行周期，至少需要10条无数据依赖关系的FMA指令才能填满各级流水线。按照文章里面测试FMA峰值的代码，反映在时空图上就是这样的：
 
