@@ -6,7 +6,7 @@
 
 本篇文章就是介绍一下如何在这颗最现代的CPU上非常简单地实现一下CNN里面的卷积算法，并可以轻松达到90%+的浮点峰值效率~ 全部代码已经开源到
 
-https://github.com/pigirons/conv3x3_m1github.com/pigirons/conv3x3_m1
+https://github.com/pigirons/conv3x3_m1
 
 ## **测试浮点峰值**
 
@@ -48,8 +48,9 @@ CNN中的卷积算法，最通用的一大类实现，就是将多通道的卷�
 
 如下图所示，矩阵分块C += A × B，绿色部分表示构造的向量外积寄存器分块，不停读取矩阵分块A中黄色部分的列向量，和矩阵分块B中蓝色部分的行向量，做乘法，并累加到绿色的寄存器分块矩阵内。
 
-![img](https://pic2.zhimg.com/80/v2-e432abf6b4403c45ff1adf1a671df530_1440w.png?source=d16d100b)
-矩阵乘法分块kernel示意
+<div align=center>![img](https://pic2.zhimg.com/80/v2-e432abf6b4403c45ff1adf1a671df530_1440w.png?source=d16d100b)
+
+<center>矩阵乘法分块kernel示意</center>
 
 根据之前
 
@@ -57,8 +58,9 @@ CNN中的卷积算法，最通用的一大类实现，就是将多通道的卷�
 
 这篇文章的介绍，我们尽量构造比较大的寄存器分块，这里可以构造成8×12的分块，需要24个寄存器。
 
-![img](https://pic1.zhimg.com/80/v2-72652c1390edc3350f4f940518984252_1440w.png?source=d16d100b)
-矩阵乘法kernel的寄存器分块示意
+<div align=center>![img](https://pic1.zhimg.com/80/v2-72652c1390edc3350f4f940518984252_1440w.png?source=d16d100b)
+
+<center>矩阵乘法kernel的寄存器分块示意</center>
 
 如上图所示，q0-q2读取B矩阵的行向量，q3分时读取A矩阵列向量，一组做24个标量乘向量后累加到q8-q31表示的C矩阵寄存器分块。
 
@@ -119,22 +121,25 @@ sgemm kernel，我们这里选择m = n = 144，k = 288这个case，其中矩阵A
 
 作为推理用的卷积，filter可以事先做好重排处理：
 
-![img](https://picx.zhimg.com/80/v2-67670a6dfc8a72abecd790d8bc2d9b50_1440w.png?source=d16d100b)
-卷积核重排
+<div align=center>![img](https://picx.zhimg.com/80/v2-67670a6dfc8a72abecd790d8bc2d9b50_1440w.png?source=d16d100b)
+
+<center>卷积核重排</center>
 
 如上图所示，filter可以表示成一个out_c乘以in_c×3×3的大矩阵，为了适应sgemm kernel的分块大小，可以将这个矩阵分成若干个144×288（32×3×3）的小矩阵。每个小矩阵内部按照sgemm kernel的要求，重排成下边这种从上到下每个8×288的长条矩阵转置后的顺序。
 
 然后是每次卷积内部要对input tensor做分块：
 
-![img](https://pic1.zhimg.com/80/v2-822ee7d4c614cbd6cf027d63237b760e_1440w.png?source=d16d100b)
-输入Tensor的分块和重排
+<div align=center>![img](https://pic1.zhimg.com/80/v2-822ee7d4c614cbd6cf027d63237b760e_1440w.png?source=d16d100b)
+
+<center>输入Tensor的分块和重排</center>
 
 首先从intput tensor里面分出来一个14×14×32的灰色小分块，注意卷积计算可能有padding，所以图中灰色的小分块是从外面padding处开始的。根据im2col的原理，这个14×14×32的小分块，包含了3×3卷积的复用，展开成矩阵乘的形式，就可以按照右上面这个Tensor中的标注，把向量Aa（即字母A到字母a表示的向量），Bb，Cc...Hh，Ii全部展开，形成右下角这样的Tensor，展开的方向和channel这一维相乘，就变成一个12×12×288（32×3×3）的Tensor，最后把12×12拉平，就变成了sgemm kernel里面的矩阵B分块，即左下角的表示。
 
 最终两个矩阵分块A和B相乘，得到下图左边这个矩阵C，大小是144（8×18）×144（12×12）。这个矩阵内部是按8×12的寄存器分块排布的，所以最终还需要做一次转换，与bias相加以后，写入output tensor，如下图右边灰色部分所示。
 
-![img](https://pic2.zhimg.com/80/v2-cb10974138485d1e4aa4c4bc81c2ce47_1440w.png?source=d16d100b)
-结果矩阵重排并写入输出Tensor
+<div align=center>![img](https://pic2.zhimg.com/80/v2-cb10974138485d1e4aa4c4bc81c2ce47_1440w.png?source=d16d100b)
+
+<center>结果矩阵重排并写入输出Tensor</center>
 
 前面描述了一个分块的转换和乘法过程，将所有的分块都做一遍这个过程，就完成了卷积的运算。做的顺序应该先沿input_channel维度，再沿Tensor的w和h维度，不断滑动，直至遍历完成。
 
