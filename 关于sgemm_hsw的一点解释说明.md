@@ -10,7 +10,7 @@ https://github.com/pigirons/sgemm_hsw/blob/master/sgemm_kernel_x64_fma.S
 
 这段汇编基本描述了这样一个寄存器分块的外积矩阵乘法：
 
-![img](https://pic1.zhimg.com/80/v2-8823e5dae0f4c6c6cdc8734b3f88d930_1440w.png?source=d16d100b)
+<p align="center"><img src="https://pic1.zhimg.com/80/v2-8823e5dae0f4c6c6cdc8734b3f88d930_1440w.png?source=d16d100b"></p>
 
 图中长矩形表示SIMD寄存器，方块表示标量。用一个4×3的寄存器分块来存储累加结果，然后从矩阵A里依次按列读取四个标量广播到向量寄存器的每个lane里，和矩阵B的三个行向量寄存器做乘法，累加到矩阵C的对应向量寄存器中。
 
@@ -26,7 +26,7 @@ https://github.com/pigirons/sgemm_hsw/blob/master/sgemm_kernel_x64_fma.S
 
 提到过FMA的吞吐和延迟的关系。以Intel Haswell架构为例，FMA指令延迟是5个周期，每周期可以吞吐2条。这样为了掩盖所有FMA的执行周期，至少需要10条无数据依赖关系的FMA指令才能填满各级流水线。按照文章里面测试FMA峰值的代码，反映在时空图上就是这样的：
 
-![img](https://picx.zhimg.com/80/v2-ff9a981438359c114c94517ee5137450_1440w.png?source=d16d100b)
+<p align="center"><img src="https://picx.zhimg.com/80/v2-ff9a981438359c114c94517ee5137450_1440w.png?source=d16d100b"></p>
 
 纵轴代表haswell架构port0和port1上各有一个FMA单元，每个FMA单元有五级流水线（S0->S5）。横轴代表时钟周期：第一个周期，最开始的两条fma指令（红色）同时分别发射到port0和port5，并执行流水线的第一阶段（S0）；随着时钟的tick，这两条指令分别进入之后的流水阶段（S2到S5）；从第二周期开始，再发射两条FMA指令（蓝色）到S0；以此类推，到第五个周期，最后两条指令开始发射（灰色），同时最开始的两条指令执行最后一个阶段（S5）；第六个周期开始，循环也回到开头，继续发射两条红色的FMA指令，完美衔接，没有任何气泡。可以想象，只要程序足够长，两个FMA单元的10个流水线阶段（相当于计算资源）绝大部分时间都是有指令在执行的，除了开头进入流水线，和结尾结束流水线。
 
@@ -38,7 +38,7 @@ https://github.com/pigirons/sgemm_hsw/blob/master/sgemm_kernel_x64_fma.S
 
 既然寄存器分块只要保证10个以上的寄存器，那能不能用10×1的分块呢？我们回顾一下Intel Haswell架构图：
 
-![img](https://pic1.zhimg.com/80/v2-bc9c65b8dc0014202b4a07838bd1c505_1440w.png?source=d16d100b)
+<p align="center"><img src="https://pic1.zhimg.com/80/v2-bc9c65b8dc0014202b4a07838bd1c505_1440w.png?source=d16d100b"></p>
 
 可以看出，除了Port0和Port1分别有一条FMA单元，Port2和Port3也分别有一条LD单元（Load），这个LD单元可以读取向量。我们假设所有的数据都在L1 cache里，LD指令就可以流水执行，大约是4个周期可以把一条向量读取到寄存器。这样，每个周期，Haswell CPU就可以同时发射两条FMA以及两条vmovaps(或者vbroadcastss）指令。这就要求，总的Load指令数量最多跟FMA指令数量相等，一旦超过，FMA将不是瓶颈，LD指令将变成瓶颈。对于10×1的分块，我们需要10+1=11次LD才能喂给10条FMA指令，这样一定不能打满FMA的峰值；对于4×3的分块，我们需要4+3=7次LD就能喂给12条FMA指令，Haswell架构应对这个比例非常轻松。
 
