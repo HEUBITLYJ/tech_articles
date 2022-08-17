@@ -50,7 +50,7 @@ CNN中的卷积算法，最通用的一大类实现，就是将多通道的卷�
 
 <p align="center">![img](https://pic2.zhimg.com/80/v2-e432abf6b4403c45ff1adf1a671df530_1440w.png?source=d16d100b)</p>
 
-<center>矩阵乘法分块kernel示意</center>
+<p align="center">矩阵乘法分块kernel示意</p>
 
 根据之前
 
