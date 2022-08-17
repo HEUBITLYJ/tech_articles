@@ -48,7 +48,7 @@ CNN中的卷积算法，最通用的一大类实现，就是将多通道的卷�
 
 如下图所示，矩阵分块C += A × B，绿色部分表示构造的向量外积寄存器分块，不停读取矩阵分块A中黄色部分的列向量，和矩阵分块B中蓝色部分的行向量，做乘法，并累加到绿色的寄存器分块矩阵内。
 
-<div align=center>![img](https://pic2.zhimg.com/80/v2-e432abf6b4403c45ff1adf1a671df530_1440w.png?source=d16d100b)
+<div align=center>![img](https://pic2.zhimg.com/80/v2-e432abf6b4403c45ff1adf1a671df530_1440w.png?source=d16d100b)</div>
 
 <center>矩阵乘法分块kernel示意</center>
 
@@ -58,7 +58,7 @@ CNN中的卷积算法，最通用的一大类实现，就是将多通道的卷�
 
 这篇文章的介绍，我们尽量构造比较大的寄存器分块，这里可以构造成8×12的分块，需要24个寄存器。
 
-<div align=center>![img](https://pic1.zhimg.com/80/v2-72652c1390edc3350f4f940518984252_1440w.png?source=d16d100b)
+<div align=center>![img](https://pic1.zhimg.com/80/v2-72652c1390edc3350f4f940518984252_1440w.png?source=d16d100b)</div>
 
 <center>矩阵乘法kernel的寄存器分块示意</center>
 
@@ -121,7 +121,7 @@ sgemm kernel，我们这里选择m = n = 144，k = 288这个case，其中矩阵A
 
 作为推理用的卷积，filter可以事先做好重排处理：
 
-<div align=center>![img](https://picx.zhimg.com/80/v2-67670a6dfc8a72abecd790d8bc2d9b50_1440w.png?source=d16d100b)
+<div align=center>![img](https://picx.zhimg.com/80/v2-67670a6dfc8a72abecd790d8bc2d9b50_1440w.png?source=d16d100b)</div>
 
 <center>卷积核重排</center>
 
@@ -129,7 +129,7 @@ sgemm kernel，我们这里选择m = n = 144，k = 288这个case，其中矩阵A
 
 然后是每次卷积内部要对input tensor做分块：
 
-<div align=center>![img](https://pic1.zhimg.com/80/v2-822ee7d4c614cbd6cf027d63237b760e_1440w.png?source=d16d100b)
+<div align=center>![img](https://pic1.zhimg.com/80/v2-822ee7d4c614cbd6cf027d63237b760e_1440w.png?source=d16d100b)</div>
 
 <center>输入Tensor的分块和重排</center>
 
@@ -137,7 +137,7 @@ sgemm kernel，我们这里选择m = n = 144，k = 288这个case，其中矩阵A
 
 最终两个矩阵分块A和B相乘，得到下图左边这个矩阵C，大小是144（8×18）×144（12×12）。这个矩阵内部是按8×12的寄存器分块排布的，所以最终还需要做一次转换，与bias相加以后，写入output tensor，如下图右边灰色部分所示。
 
-<div align=center>![img](https://pic2.zhimg.com/80/v2-cb10974138485d1e4aa4c4bc81c2ce47_1440w.png?source=d16d100b)
+<div align=center>![img](https://pic2.zhimg.com/80/v2-cb10974138485d1e4aa4c4bc81c2ce47_1440w.png?source=d16d100b)</div>
 
 <center>结果矩阵重排并写入输出Tensor</center>
 
